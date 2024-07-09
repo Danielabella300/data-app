@@ -5,6 +5,11 @@ public class DataManager
     private DataFetcher _dataFetcher;
     private DataStorage _dataStorage;
 
+    /// <summary>
+    /// Call from backup local path if network call is unavailable
+    /// </summary>
+    private const string LocalSourcePath = "D:\\Github\\data-app\\src\\DataApp";
+
     public DataManager()
     {
         _dataFetcher = new DataFetcher();
@@ -24,6 +29,51 @@ public class DataManager
             return -1;
         }
 
+        /// Create Mock Data
+        string data;
+
+        /// Added Error Handling if external network call to storage fails
+        try
+        {
+            data = _dataFetcher.FetchData(dataId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Call to External Network Failed: " + ex.Message);
+            Console.WriteLine("Using Local Data");
+            data = FetchDataFromLocal(dataId);
+        }
+
+        if (string.IsNullOrWhiteSpace(data))
+        {
+            return -2;
+        }
+
+        _dataStorage.StoreData(dataId, data);
+        return 0;
+    }
+
+    private string FetchDataFromLocal(int dataId)
+    {
+        try
+        {
+            return File.ReadAllText($"{LocalSourcePath}{dataId}.dat");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return "";
+        }
+    }
+
+    /*
+    public int ConsolidateDataFromSources(int dataId)
+    {
+        if (dataId < 0)
+        {
+            return -1;
+        }
+
         var data = _dataFetcher.FetchData(dataId);
         if (string.IsNullOrWhiteSpace(data))
         {
@@ -32,4 +82,5 @@ public class DataManager
         _dataStorage.StoreData(dataId, data);
         return 0;
     }
+    */
 }
